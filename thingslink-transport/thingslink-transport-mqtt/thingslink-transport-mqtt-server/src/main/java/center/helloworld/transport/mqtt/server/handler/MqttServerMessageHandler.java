@@ -1,0 +1,87 @@
+package center.helloworld.transport.mqtt.server.handler;
+
+import center.helloworld.transport.mqtt.server.protocol.ProtocolProcesser;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.mqtt.MqttConnectMessage;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttMessageType;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ * @author zhishun.cai
+ * @create 2024/3/18
+ * @note
+ */
+@Slf4j
+@ChannelHandler.Sharable
+@Component
+public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMessage> {
+
+    @Autowired
+    private ProtocolProcesser protocolProcesser;
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, MqttMessage mqttMessage) throws Exception {
+        Channel channel = channelHandlerContext.channel();
+        MqttMessageType msgType = mqttMessage.fixedHeader().messageType();
+        switch (msgType) {
+            case CONNECT -> protocolProcesser.connectProcess().process(channel, (MqttConnectMessage) mqttMessage);
+            case PINGREQ -> protocolProcesser.pingProcess().pingProcess(channel, mqttMessage);
+        }
+        log.info("message type is {}", msgType);
+        log.info("channelRead0 message -> {}", mqttMessage.toString());
+    }
+
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        super.channelRegistered(ctx);
+        log.info("channelRegistered ~~");
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        super.channelUnregistered(ctx);
+        log.info("channelUnregistered ~~");
+    }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
+        log.info("channelActive ~~");
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+        log.info("channelInactive ~~");
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        super.channelReadComplete(ctx);
+        log.info("channelReadComplete ~~");
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        super.userEventTriggered(ctx, evt);
+        log.info("userEventTriggered ~~");
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+        log.info("exceptionCaught ~~");
+    }
+
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        super.channelRead(ctx, msg);
+        log.info("channelRead ~~, {}", msg);
+    }
+}

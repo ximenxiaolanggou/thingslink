@@ -1,0 +1,4 @@
+center\helloworld\starter\redis\configure\LettuceRedisAutoConfigure.class
+center\helloworld\starter\redis\properties\LettuceRedisProperties.class
+center\helloworld\starter\redis\service\RedisService.class
+META-INF\spring-configuration-metadata.json

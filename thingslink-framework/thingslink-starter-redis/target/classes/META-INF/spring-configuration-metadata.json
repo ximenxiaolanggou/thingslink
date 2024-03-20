@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {
+      "name": "thingslink.starter.redis",
+      "type": "center.helloworld.starter.redis.properties.LettuceRedisProperties",
+      "sourceType": "center.helloworld.starter.redis.properties.LettuceRedisProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "thingslink.starter.redis.enable",
+      "type": "java.lang.Boolean",
+      "description": "是否开启Lettuce Redis",
+      "sourceType": "center.helloworld.starter.redis.properties.LettuceRedisProperties",
+      "defaultValue": true
+    }
+  ],
+  "hints": []
+}
