@@ -28,6 +28,5 @@ public class MqttBrokerHeartHandler extends ChannelDuplexHandler {
         }else if(event.state() == IdleState.WRITER_IDLE) {
             System.out.printf("WRITER_IDLE");
         }
-
     }
 }

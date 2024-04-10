@@ -5,9 +5,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.mqtt.MqttConnectMessage;
-import io.netty.handler.codec.mqtt.MqttMessage;
-import io.netty.handler.codec.mqtt.MqttMessageType;
+import io.netty.handler.codec.mqtt.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,7 +29,11 @@ public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMe
         MqttMessageType msgType = mqttMessage.fixedHeader().messageType();
         switch (msgType) {
             case CONNECT -> protocolProcesser.connectProcess().process(channel, (MqttConnectMessage) mqttMessage);
-            case PINGREQ -> protocolProcesser.pingProcess().pingProcess(channel, mqttMessage);
+            case PINGREQ -> protocolProcesser.pingProcess().process(channel, mqttMessage);
+            case PUBLISH -> protocolProcesser.publishProcess((MqttPublishMessage) mqttMessage).process(channel, (MqttPublishMessage) mqttMessage);
+            case PUBREL -> protocolProcesser.pubRelProcess().process(channel, (MqttMessageIdVariableHeader) mqttMessage.variableHeader());
+            case SUBSCRIBE -> protocolProcesser.subscribeProcess().process(channel, (MqttSubscribeMessage) mqttMessage);
+            case UNSUBSCRIBE -> protocolProcesser.unsubscribeProcess().process(channel, (MqttUnsubscribeMessage) mqttMessage);
         }
         log.info("message type is {}", msgType);
         log.info("channelRead0 message -> {}", mqttMessage.toString());
@@ -82,6 +84,5 @@ public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMe
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         super.channelRead(ctx, msg);
-        log.info("channelRead ~~, {}", msg);
     }
 }

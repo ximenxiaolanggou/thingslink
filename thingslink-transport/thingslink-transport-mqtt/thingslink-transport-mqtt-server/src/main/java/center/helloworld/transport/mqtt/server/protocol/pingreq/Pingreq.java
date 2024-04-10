@@ -10,7 +10,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
  */
 public interface Pingreq {
 
-    default void pingProcess(Channel channel, MqttMessage msg) {
+    default void process(Channel channel, MqttMessage msg) {
 
     }
 }

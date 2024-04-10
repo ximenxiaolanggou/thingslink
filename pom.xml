@@ -24,6 +24,7 @@
         <spring-cloud-alibaba.version>2022.0.0.0</spring-cloud-alibaba.version>
         <netty.version>4.1.107.Final</netty.version>
         <thingslink.version>1.0-SNAPSHOT</thingslink.version>
+        <mqtt.client.version>1.2.5</mqtt.client.version>
     </properties>
 
     <dependencyManagement>
@@ -55,9 +56,6 @@
                 <scope>import</scope>
             </dependency>
 
-
-
-
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
@@ -68,6 +66,12 @@
                 <groupId>center.helloworld</groupId>
                 <artifactId>thingslink-starter-redis</artifactId>
                 <version>${thingslink.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.eclipse.paho</groupId>
+                <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+                <version>${mqtt.client.version}</version>
             </dependency>
 
         </dependencies>

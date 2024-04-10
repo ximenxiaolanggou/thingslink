@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class DefaultPingreq implements Pingreq {
 
     @Override
-    public void pingProcess(Channel channel, MqttMessage msg) {
+    public void process(Channel channel, MqttMessage msg) {
         System.out.println("ping - > " + channel);
         System.out.println("ping - > " + msg);
 

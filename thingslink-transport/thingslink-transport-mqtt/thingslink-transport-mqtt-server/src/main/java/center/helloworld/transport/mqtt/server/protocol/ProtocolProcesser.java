@@ -2,6 +2,12 @@ package center.helloworld.transport.mqtt.server.protocol;
 
 import center.helloworld.transport.mqtt.server.protocol.connect.Connect;
 import center.helloworld.transport.mqtt.server.protocol.pingreq.Pingreq;
+import center.helloworld.transport.mqtt.server.protocol.publish.Publish;
+import center.helloworld.transport.mqtt.server.protocol.publish.factory.QosPublishFactory;
+import center.helloworld.transport.mqtt.server.protocol.pubrel.PubRel;
+import center.helloworld.transport.mqtt.server.protocol.subscribe.Subscribe;
+import center.helloworld.transport.mqtt.server.protocol.unsubscribe.UnSubscribe;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +25,18 @@ public class ProtocolProcesser {
     @Autowired
     private Pingreq ping;
 
+    @Autowired
+    private PubRel pubRel;
+
+    @Autowired
+    private Subscribe subscribe;
+
+    @Autowired
+    private UnSubscribe unSubscribe;
+
+    @Autowired
+    private QosPublishFactory qosPublishFactory;
+
     /**
      * 连接处理
      * @return
@@ -34,5 +52,38 @@ public class ProtocolProcesser {
     public Pingreq pingProcess() {
         return ping;
     }
+
+    /**
+     * pubRel处理
+     * @return
+     */
+    public PubRel pubRelProcess() {
+        return pubRel;
+    }
+
+    /**
+     * publish
+     * @return
+     */
+    public Publish publishProcess(MqttPublishMessage message) {
+        return qosPublishFactory.getQosLevelPublishHandler(message.fixedHeader().qosLevel());
+    }
+
+    /**
+     * subscribe
+     * @return
+     */
+    public Subscribe subscribeProcess() {
+        return subscribe;
+    }
+
+    /**
+     * subscribe
+     * @return
+     */
+    public UnSubscribe unsubscribeProcess() {
+        return unSubscribe;
+    }
+
 
 }
