@@ -42,6 +42,27 @@
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <!--开启Spring Cloud 应用程序启动时加载bootstrap配置文件-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>center.helloworld</groupId>
+            <artifactId>thingslink-server-device-api</artifactId>
+        </dependency>
+
     </dependencies>
 
     <profiles>
@@ -78,7 +99,7 @@
             <resource>
                 <directory>src/main/resources/profile/${env}</directory>
                 <includes>
-                    <include>application.yml</include>
+                    <include>bootstrap.yml</include>
                     <include>bootstrap-*.yml</include>
                 </includes>
             </resource>

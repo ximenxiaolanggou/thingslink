@@ -1,0 +1,23 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /server-device
+spring:
+  application:
+    name: Thingslink-Server-Device
+  cloud:
+    nacos:
+      discovery:
+        username: nacos
+        password: nacos
+        namespace: thingslink
+        server-addr: nacos.helloworld.center
+      config:
+        username: nacos
+        password: nacos
+        namespace: thingslink
+        server-addr: nacos.helloworld.center
+        # 配置文件格式
+        file-extension: yml
+  main:
+    allow-circular-references: true

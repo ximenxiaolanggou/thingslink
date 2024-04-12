@@ -17,6 +17,7 @@ import org.apache.logging.log4j.message.Message;
 @NoArgsConstructor
 public class Session {
 
+    private String sessionId;
 
     private String clientId;
 

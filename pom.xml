@@ -11,6 +11,7 @@
     <modules>
         <module>thingslink-framework</module>
         <module>thingslink-transport</module>
+        <module>thingslink-server</module>
     </modules>
 
 
@@ -25,12 +26,15 @@
         <netty.version>4.1.107.Final</netty.version>
         <thingslink.version>1.0-SNAPSHOT</thingslink.version>
         <mqtt.client.version>1.2.5</mqtt.client.version>
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mysql.version>8.0.29</mysql.version>
+        <druid.version>1.2.4</druid.version>
+        <hutool.version>5.8.16</hutool.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <!-- 统一依赖管理 -->
-            <!-- 核心依赖 -->
             <!--spring boot-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -74,10 +78,63 @@
                 <version>${mqtt.client.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysql.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-boot-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>center.helloworld</groupId>
+                <artifactId>thingslink-starter-mysql</artifactId>
+                <version>${thingslink.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>center.helloworld</groupId>
+                <artifactId>thingslink-server-device-api</artifactId>
+                <version>${thingslink.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>center.helloworld</groupId>
+                <artifactId>thingslink-starter-openfeign</artifactId>
+                <version>${thingslink.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
     <profiles>
+        <profile>
+            <id>jdk-17</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <jdk>17</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.source>17</maven.compiler.source>
+                <maven.compiler.target>17</maven.compiler.target>
+                <maven.compiler.compilerVersion>17</maven.compiler.compilerVersion>
+            </properties>
+        </profile>
         <profile>
             <id>dev</id>
             <properties>
@@ -96,5 +153,6 @@
             </properties>
         </profile>
     </profiles>
+
 
 </project>

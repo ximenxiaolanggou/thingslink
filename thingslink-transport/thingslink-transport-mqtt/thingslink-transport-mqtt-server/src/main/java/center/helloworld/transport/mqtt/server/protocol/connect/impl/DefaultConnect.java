@@ -1,10 +1,12 @@
 package center.helloworld.transport.mqtt.server.protocol.connect.impl;
 
+import center.helloworld.transport.mqtt.server.auth.IAuthStrategy;
 import center.helloworld.transport.mqtt.server.protocol.connect.Connect;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,6 +18,9 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class DefaultConnect implements Connect {
+
+    @Autowired
+    private IAuthStrategy auth;
 
     @Override
     public void process(Channel channel, MqttConnectMessage message) {

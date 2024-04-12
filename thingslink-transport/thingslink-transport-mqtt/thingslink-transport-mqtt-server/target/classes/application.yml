@@ -1,7 +1,0 @@
-server:
-  port: 8081
-
-thingslink:
-  transport:
-    mqtt:
-      sessionStorageMode: redis # memory(默认) | redis | mysql

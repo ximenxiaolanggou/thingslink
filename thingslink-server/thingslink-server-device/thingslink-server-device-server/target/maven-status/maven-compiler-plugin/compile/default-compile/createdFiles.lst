@@ -1,0 +1,5 @@
+center\helloworld\server\device\server\DeviceApp.class
+center\helloworld\server\device\server\device\service\impl\DeviceServiceImpl.class
+center\helloworld\server\device\server\device\mapper\DeviceMapper.class
+center\helloworld\server\device\server\device\service\DeviceService.class
+center\helloworld\server\device\server\device\web\DeviceController.class
