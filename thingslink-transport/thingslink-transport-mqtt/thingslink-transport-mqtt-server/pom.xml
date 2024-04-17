@@ -63,6 +63,11 @@
             <artifactId>thingslink-server-device-api</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+
     </dependencies>
 
     <profiles>
@@ -106,6 +111,7 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
+                    <include>logback.xml</include>
                     <include>**/*.properties</include>
                     <include>**/*.xml</include>
                     <include>**/*.txt</include>

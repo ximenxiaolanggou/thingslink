@@ -30,6 +30,7 @@
         <mysql.version>8.0.29</mysql.version>
         <druid.version>1.2.4</druid.version>
         <hutool.version>5.8.16</hutool.version>
+        <logback.version>1.2.3</logback.version>
     </properties>
 
     <dependencyManagement>

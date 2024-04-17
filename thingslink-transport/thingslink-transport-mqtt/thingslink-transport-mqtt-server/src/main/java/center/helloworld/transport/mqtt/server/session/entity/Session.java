@@ -21,8 +21,6 @@ public class Session {
 
     private String clientId;
 
-    private Long businessId;
-
     private ChannelId channelId;
 
     private boolean cleanSession;

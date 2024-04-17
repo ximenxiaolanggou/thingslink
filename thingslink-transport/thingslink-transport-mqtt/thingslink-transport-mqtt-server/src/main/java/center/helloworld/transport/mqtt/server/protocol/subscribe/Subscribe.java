@@ -10,6 +10,8 @@ import io.netty.handler.codec.mqtt.MqttSubscribeMessage;
  */
 public interface Subscribe {
 
+    String topicReg = "^(\\/[a-zA-Z0-9_]+)(((\\/[a-zA-Z0-9_]+)*(\\/\\#)?)|((\\/([a-zA-Z0-9_]+|\\+))*))";
+
     /**
      * 处理事件
      * @param channel

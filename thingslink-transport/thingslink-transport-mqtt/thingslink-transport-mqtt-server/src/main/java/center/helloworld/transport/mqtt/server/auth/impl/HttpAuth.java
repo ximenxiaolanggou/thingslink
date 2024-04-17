@@ -1,6 +1,7 @@
 package center.helloworld.transport.mqtt.server.auth.impl;
 
 import center.helloworld.transport.mqtt.server.auth.IAuthStrategy;
+import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -15,13 +16,9 @@ import org.springframework.stereotype.Component;
 public class HttpAuth implements IAuthStrategy {
 
 
-    /**
-     * 认证
-     * @param credentials
-     * @return
-     */
+
     @Override
-    public MqttConnectReturnCode auth(Object credentials) {
+    public MqttConnectReturnCode auth(MqttConnectMessage message) {
         return null;
     }
 }

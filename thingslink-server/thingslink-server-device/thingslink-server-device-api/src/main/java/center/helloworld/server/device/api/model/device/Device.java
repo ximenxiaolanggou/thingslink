@@ -71,11 +71,6 @@ public class Device extends Model<Device> {
     private Long productId;
 
     /**
-     * 企业ID
-     */
-    private Long businessId;
-
-    /**
      * 产品key
      */
     @TableField(exist = false)

@@ -1,5 +1,6 @@
 package center.helloworld.transport.mqtt.server.auth;
 
+import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 
 /**
@@ -11,8 +12,8 @@ public interface IAuthStrategy {
 
     /**
      * 认证
-     * @param credentials
+     * @param msg
      * @return
      */
-    MqttConnectReturnCode auth(Object credentials);
+    MqttConnectReturnCode auth(MqttConnectMessage msg);
 }
