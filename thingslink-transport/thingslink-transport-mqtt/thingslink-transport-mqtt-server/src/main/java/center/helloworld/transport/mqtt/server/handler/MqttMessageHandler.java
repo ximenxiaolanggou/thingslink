@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class MqttMessageHandler extends SimpleChannelInboundHandler<MqttMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
-        System.out.println("handling ~~");
+        System.out.println("handling ~~ res：" + msg);
     }
 
     public static void main(String[] args) {

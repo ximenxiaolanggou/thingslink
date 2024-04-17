@@ -13,7 +13,6 @@ import java.io.Serializable;
  * @note Mqtt 固定头
  */
 @Data
-@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 public class MqttFixedHeader implements Serializable {

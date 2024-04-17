@@ -45,60 +45,108 @@ public class MqttCodec extends ByteToMessageCodec<MqttMessage> {
      */
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> list) throws Exception {
-        System.out.println(in.writerIndex());
-        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader();
-        // 事件类型
-        byte controlPackage = in.readByte();
-        // 控制包类型
-        mqttFixedHeader.setControlPacketType(MqttControlPacketTypeFactory.getPackageType(controlPackage >> 4));
-        // 控制包类型标志
-        mqttFixedHeader.setControlPacketTypeFlag(MqttControlPacketTypeFlagFactory.getControlPacketTypeFlag(mqttFixedHeader.getControlPacketType(), controlPackage));
-        // 获取剩余数据包长度
-        int remainingLength = getRemainingLength(in);
-        log.info("剩余长度为：{}", remainingLength);
-        mqttFixedHeader.setRemainingLength(remainingLength);
+        MqttMessage mqttMessage = new MqttMessage();
+        try{
+            MqttFixedHeader mqttFixedHeader = new MqttFixedHeader();
+            // 事件类型
+            byte controlPackage = in.readByte();
+            // 控制包类型
+            mqttFixedHeader.setControlPacketType(MqttControlPacketTypeFactory.getPackageType(controlPackage >> 4));
+            // 控制包类型标志
+            mqttFixedHeader.setControlPacketTypeFlag(MqttControlPacketTypeFlagFactory.getControlPacketTypeFlag(mqttFixedHeader.getControlPacketType(), controlPackage));
+            // 获取剩余数据包长度
+            int remainingLength = getRemainingLength(in);
+            log.info("剩余长度为：{}", remainingLength);
+            mqttFixedHeader.setRemainingLength(remainingLength);
 
-        System.out.println("固定头 => " + mqttFixedHeader);
+            System.out.println("固定头 => " + mqttFixedHeader);
 
-        ByteBuf remainingBuf = in.readBytes(mqttFixedHeader.getRemainingLength());
-        // ===== 可变头 ====
-        System.out.println(in.readableBytes());
-        MqttVariableHeader variableHeader = switch (mqttFixedHeader.getControlPacketType()) {
-            case CONNECT -> {
-                remainingBuf.readByte();// 00  处于固定报文头和可变报文头之间（对于CONNECT控制报文无意义）
-                MqttConnectVariableHeader connectVariableHeader = new MqttConnectVariableHeader();
-                // 协议名长度
-                byte protocolNameLen = remainingBuf.readByte();
-                connectVariableHeader.setProtocolNameLen(protocolNameLen);
-                // 协议名
-                connectVariableHeader.setProtocolName(remainingBuf.readBytes(protocolNameLen).toString(StandardCharsets.UTF_8));
-                // 协议版本
-                connectVariableHeader.setVersion(remainingBuf.readByte());
-                // 连接标志
-                Short connectFlag = remainingBuf.readUnsignedByte();
-                connectVariableHeader.setUsernameFlag(((connectFlag >> 7) & 1) == 1);
-                connectVariableHeader.setPasswordFlag(((connectFlag >> 6) & 1) == 1);
-                connectVariableHeader.setWillRetain(((connectFlag >> 5) & 1) == 1);
-                connectVariableHeader.setWillQos((connectFlag >> 3) & 3);
-                connectVariableHeader.setWillFlag(((connectFlag >> 2) & 1) == 1);
-                connectVariableHeader.setCleanStart(((connectFlag >> 1) & 1) == 1);
-                connectVariableHeader.setKeepAliveTimeSeconds((int)remainingBuf.readChar());
+            mqttMessage.setMqttFixedHeader(mqttFixedHeader);
+            ByteBuf remainingBuf = in.readBytes(mqttFixedHeader.getRemainingLength());
+            // ===== 可变头 ====
+            System.out.println(in.readableBytes());
+            switch (mqttFixedHeader.getControlPacketType()) {
+                case CONNECT -> {
+                    remainingBuf.readByte();// 00  处于固定报文头和可变报文头之间（对于CONNECT控制报文无意义）
+                    MqttConnectVariableHeader connectVariableHeader = new MqttConnectVariableHeader();
+                    // 协议名长度
+                    byte protocolNameLen = remainingBuf.readByte();
+                    connectVariableHeader.setProtocolNameLen(protocolNameLen);
+                    // 协议名
+                    connectVariableHeader.setProtocolName(remainingBuf.readBytes(protocolNameLen).toString(StandardCharsets.UTF_8));
+                    // 协议版本
+                    connectVariableHeader.setVersion(remainingBuf.readByte());
+                    // 连接标志
+                    Short connectFlag = remainingBuf.readUnsignedByte();
+                    connectVariableHeader.setUsernameFlag(((connectFlag >> 7) & 1) == 1);
+                    connectVariableHeader.setPasswordFlag(((connectFlag >> 6) & 1) == 1);
+                    connectVariableHeader.setWillRetain(((connectFlag >> 5) & 1) == 1);
+                    connectVariableHeader.setWillQos((connectFlag >> 3) & 3);
+                    connectVariableHeader.setWillFlag(((connectFlag >> 2) & 1) == 1);
+                    connectVariableHeader.setCleanStart(((connectFlag >> 1) & 1) == 1);
+                    connectVariableHeader.setKeepAliveTimeSeconds((int)remainingBuf.readChar());
 
-                // 连接属性
-                byte connectPropertiesLen = remainingBuf.readByte();
-                ByteBuf connectPropertiesData = remainingBuf.readBytes(connectPropertiesLen);
-                MqttConnectProperties mqttConnectProperties = MqttConnectProperties.mqttConnectPropertiesresolver(connectPropertiesData);
-                connectVariableHeader.setMqttConnectProperties(mqttConnectProperties);
-                System.out.println("可变头 => " + connectVariableHeader);
-                yield connectVariableHeader;
-            }
-            default -> throw new RuntimeException("");
-        };
+                    // 连接属性
+                    byte connectPropertiesLen = remainingBuf.readByte();
+                    ByteBuf connectPropertiesData = remainingBuf.readBytes(connectPropertiesLen);
+                    MqttConnectProperties mqttConnectProperties = MqttConnectProperties.mqttConnectPropertiesresolver(connectPropertiesData);
+                    connectVariableHeader.setMqttConnectProperties(mqttConnectProperties);
+                    mqttMessage.setVariableHeader(connectVariableHeader);
+                    System.out.println("可变头 => " + connectVariableHeader);
 
-        // ===== 载荷 ====
-        ByteBuf payloadBuf = remainingBuf.readBytes(remainingBuf.readableBytes());
-        char clientId = payloadBuf.readChar();
+                    // ===== 载荷 ====
+                    ByteBuf payloadBuf = remainingBuf.readBytes(remainingBuf.readableBytes());
+                    MqttConnectPayload connectPayload = new MqttConnectPayload();
+                    mqttMessage.setPayload(connectPayload);
+                    // 客户端ID
+                    char clientIdLength = payloadBuf.readChar();
+                    String clientId = payloadBuf.readBytes(clientIdLength).toString(StandardCharsets.UTF_8);
+                    connectPayload.setClientId(clientId);
+                    if(connectVariableHeader.isWillFlag()) {
+                        MqttWillProperties willProperties = new MqttWillProperties();
+                        connectPayload.setWillProperties(willProperties);
+                        int willPropertyLength = (int)payloadBuf.readByte();
+                        willProperties.setPropertyLength(willPropertyLength);
+                        ByteBuf willPropertyBuf = payloadBuf.readBytes(willPropertyLength);
 
+                        // 解析 遗嘱属性 Will Properties
+                        while (willPropertyBuf.readableBytes() > 0) {
+                            byte payloadFormatIndicator = willPropertyBuf.readByte();
+                            MqttWillProperties.MqttWillPropertyType willPropertyType = MqttWillProperties.willPropertyTypeMap.get((int) payloadFormatIndicator);
+                            switch (willPropertyType) {
+                                case WILL_DELAY_INTERVAL -> willProperties.setWillDelayInterval(willPropertyBuf.readInt());
+                                case MESSAGE_EXPIRY_INTERVAL -> willProperties.setMessageExpireInterval(willPropertyBuf.readInt());
+                                case CONTENT_TYPE -> willProperties.setContentType(willPropertyBuf.readBytes(willPropertyBuf.readChar()).toString(StandardCharsets.UTF_8));
+                                case RESPONSE_TOPIC -> willProperties.setResponesType(willPropertyBuf.readBytes(willPropertyBuf.readChar()).toString(StandardCharsets.UTF_8));
+                                case CORRELATION_DATA -> willProperties.setCorrelationData(willPropertyBuf.readBytes(willPropertyBuf.readChar()).toString(StandardCharsets.UTF_8));
+                                case USER_PROPERTY -> willProperties.setUserProperty(willPropertyBuf.readBytes(willPropertyBuf.readableBytes()).toString(StandardCharsets.UTF_8));
+                                case PAYLOAD_FORMAT_INDICATOR -> willProperties.setPayloadFormatIndicator((int)willPropertyBuf.readByte());
+                            }
+                        }
+                        // 遗嘱主题 Will Topic
+                        connectPayload.setWillTopic(payloadBuf.readBytes(payloadBuf.readChar()).toString(StandardCharsets.UTF_8));
+                        // 遗嘱载荷 Will Payload
+                        connectPayload.setWillPayloadData(payloadBuf.readBytes(payloadBuf.readChar()).toString(StandardCharsets.UTF_8));
+                    }
+
+                    // 用户名 User Name
+                    if(connectVariableHeader.isUsernameFlag()) {
+                        connectPayload.setUsername(payloadBuf.readBytes(payloadBuf.readChar()).toString(StandardCharsets.UTF_8));
+                    }
+
+                    // 密码 Password
+                    if(connectVariableHeader.isUsernameFlag()) {
+                        connectPayload.setPassword(payloadBuf.readBytes(payloadBuf.readChar()).toString(StandardCharsets.UTF_8));
+                    }
+                }
+                default -> throw new RuntimeException("");
+            };
+        }catch (Exception e) {
+            mqttMessage.setDecoderResult(DecoderResult.ERROR);
+        }
+        mqttMessage.setDecoderResult(DecoderResult.SUCCESS);
+        System.out.println("Connect 解析完成 : " + mqttMessage);
+        list.add(mqttMessage);
     }
 
     /**

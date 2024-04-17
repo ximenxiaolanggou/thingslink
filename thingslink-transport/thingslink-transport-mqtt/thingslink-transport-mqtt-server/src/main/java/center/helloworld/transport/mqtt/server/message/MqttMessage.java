@@ -3,6 +3,7 @@ package center.helloworld.transport.mqtt.server.message;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 
@@ -13,26 +14,28 @@ import java.io.Serializable;
  */
 
 @Data
+@ToString
+@NoArgsConstructor
 @AllArgsConstructor
 public class MqttMessage implements Serializable {
 
     /**
      * 固定头
      */
-    private final MqttFixedHeader mqttFixedHeader;
+    private MqttFixedHeader mqttFixedHeader;
 
     /**
      * 可变头
      */
-    private final Object variableHeader;
+    private MqttVariableHeader variableHeader;
 
     /**
      * 载体
      */
-    private final Object payload;
+    private MqttPayload payload;
 
     /**
      * 编码结果
      */
-    private final DecoderResult decoderResult;
+    private DecoderResult decoderResult;
 }
