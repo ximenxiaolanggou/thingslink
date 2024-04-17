@@ -153,6 +153,13 @@
                 <env>pro</env>
             </properties>
         </profile>
+        <profile>
+            <!-- ppe环境 -->
+            <id>ppe</id>
+            <properties>
+                <env>ppe</env>
+            </properties>
+        </profile>
     </profiles>
 
 </project>
