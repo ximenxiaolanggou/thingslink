@@ -46,7 +46,7 @@ public class MqttBroker implements CommandLineRunner {
             bootstrap.option(ChannelOption.SO_REUSEADDR, true)
                     .option(ChannelOption.SO_BACKLOG, 1024)
                     .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                    .option(ChannelOption.SO_RCVBUF, 10);
+                    .option(ChannelOption.SO_RCVBUF, 2048);
 
             bootstrap.childOption(ChannelOption.TCP_NODELAY, true)
                     .childOption(ChannelOption.SO_KEEPALIVE, true)

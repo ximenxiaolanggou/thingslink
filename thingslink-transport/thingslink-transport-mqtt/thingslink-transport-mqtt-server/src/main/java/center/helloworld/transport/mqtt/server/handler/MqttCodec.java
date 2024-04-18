@@ -1,17 +1,11 @@
 package center.helloworld.transport.mqtt.server.handler;
 
 import center.helloworld.transport.mqtt.server.message.*;
-import cn.hutool.core.math.BitStatusUtil;
-import cn.hutool.core.util.ByteUtil;
-import cn.hutool.core.util.HexUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.buf.HexUtils;
-import org.springframework.beans.propertyeditors.CharacterEditor;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +39,13 @@ public class MqttCodec extends ByteToMessageCodec<MqttMessage> {
      */
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> list) throws Exception {
+        System.out.println("buffer => " + in.capacity() + " - " + in.readableBytes());
+        List<Byte> remainingLengthBytes = getRemainingLengthBytes(in);
+        if(computeRemainingLength(remainingLengthBytes) > (in.readableBytes() - 1 - remainingLengthBytes.size())) {
+            // 数据不完整
+            return;
+        }
+
         MqttMessage mqttMessage = new MqttMessage();
         try{
             MqttFixedHeader mqttFixedHeader = new MqttFixedHeader();
@@ -147,6 +148,53 @@ public class MqttCodec extends ByteToMessageCodec<MqttMessage> {
         mqttMessage.setDecoderResult(DecoderResult.SUCCESS);
         System.out.println("Connect 解析完成 : " + mqttMessage);
         list.add(mqttMessage);
+    }
+
+    /**
+     * 获取数据包长度字节
+     * @param in
+     * @return
+     */
+    private List<Byte> getRemainingLengthBytes(ByteBuf in) {
+        List<Byte> cache = new ArrayList();
+        // 获取记录长度的字节集合， TODO 允许携带的数据包长度为4个字节（高位为进位标志）
+        int i = 1;
+        for (;;) {
+            byte b = in.getByte(i++);
+            cache.add(b);
+            if((b & 0x80) == 0) {
+                // 后面字节不是记录剩余长度
+                break;
+            }
+        }
+        return cache;
+    }
+
+    /**
+     * 计算剩余长度
+     * @param cache
+     * @return
+     */
+    public int computeRemainingLength(List<Byte> cache) {
+        /**
+         * 计算长度
+         * 假设消息的剩余长度是300，它需要用两个字节来表示。300的二进制表示是 100101100，所以剩余长度的编码应该是 10101100 00000010。
+         * 在这个编码中，第一个字节的最高位是1，表示后续还有剩余长度信息，低7位是 1010110，第二个字节的最高位是0，表示这是最后一个字节，低7位是 00000010。
+         * 将这两个字节的低7位拼接起来得到最终的剩余长度值为 300。
+         */
+        if(cache.size() == 1) {
+            // 一个字节表示长度
+            return cache.get(0);
+        }else {
+            // 多个字节表示长度
+            int len = 0;
+            for (int i = 0; i < cache.size(); i++) {
+                byte lenItem = cache.get(i);
+                lenItem &= 0x7f;
+                len |= (lenItem << (i * 7));
+            }
+            return len;
+        }
     }
 
     /**
