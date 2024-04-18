@@ -1,9 +1,8 @@
-package center.helloworld.transport.mqtt.server.message;
+package center.helloworld.transport.mqtt.server.codec.fixedheader;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.io.Serializable;
 

@@ -1,7 +1,7 @@
 package center.helloworld.transport.mqtt.server.handler;
 
-import center.helloworld.transport.mqtt.server.message.MqttControlPacketType;
-import center.helloworld.transport.mqtt.server.message.MqttMessage;
+import center.helloworld.transport.mqtt.server.codec.fixedheader.MqttControlPacketType;
+import center.helloworld.transport.mqtt.server.codec.message.MqttMessage;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

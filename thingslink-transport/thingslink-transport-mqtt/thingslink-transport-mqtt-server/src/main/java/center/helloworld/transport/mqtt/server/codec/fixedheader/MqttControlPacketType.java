@@ -1,4 +1,4 @@
-package center.helloworld.transport.mqtt.server.message;
+package center.helloworld.transport.mqtt.server.codec.fixedheader;
 
 /**
  * @author zhishun.cai

@@ -1,7 +1,4 @@
-package center.helloworld.transport.mqtt.server.message;
-
-import cn.hutool.core.math.BitStatusUtil;
-import cn.hutool.core.util.ByteUtil;
+package center.helloworld.transport.mqtt.server.codec.fixedheader;
 
 /**
  * @author zhishun.cai

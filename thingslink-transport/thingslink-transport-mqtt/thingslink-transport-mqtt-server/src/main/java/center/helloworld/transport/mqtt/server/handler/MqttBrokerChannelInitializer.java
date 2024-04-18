@@ -22,13 +22,16 @@ public class MqttBrokerChannelInitializer extends ChannelInitializer<SocketChann
     private MqttBrokerHeartHandler mqttBrokerHeartHandler;
 
     @Autowired
+    private MqttCodec mqttCodec;
+
+    @Autowired
     private MqttServerMessageHandler_Bak mqttServerMessageHandler;
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ChannelPipeline channelPipeline = ch.pipeline();
         channelPipeline.addLast("log", new LoggingHandler(LogLevel.DEBUG));
-        channelPipeline.addLast("encoder", new MqttCodec());
+        channelPipeline.addLast("encoder", mqttCodec);
         channelPipeline.addLast("handler", new MqttMessageHandler());
         channelPipeline.addLast(mqttBrokerHeartHandler);
     }

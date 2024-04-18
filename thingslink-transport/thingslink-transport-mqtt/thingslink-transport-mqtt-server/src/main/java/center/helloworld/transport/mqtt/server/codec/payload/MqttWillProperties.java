@@ -1,4 +1,4 @@
-package center.helloworld.transport.mqtt.server.message;
+package center.helloworld.transport.mqtt.server.codec.payload;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

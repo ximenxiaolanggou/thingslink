@@ -1,4 +1,4 @@
-package center.helloworld.transport.mqtt.server.message;
+package center.helloworld.transport.mqtt.server.codec.message;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class WillMessage implements Serializable {
+public class MqttWillMessage implements Serializable {
 
     private static final long serialVersionUID = -8112511377194421600L;
 
@@ -64,7 +64,7 @@ public class WillMessage implements Serializable {
      */
     private int remainingLength;
 
-    public WillMessage(String clientId, String topic, MqttQoS mqttQoS, int messageId, byte[] messageBytes) {
+    public MqttWillMessage(String clientId, String topic, MqttQoS mqttQoS, int messageId, byte[] messageBytes) {
         this.clientId = clientId;
         this.topic = topic;
         this.mqttQoS = mqttQoS;

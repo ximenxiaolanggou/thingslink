@@ -2,7 +2,7 @@ package center.helloworld.transport.mqtt.server.protocol.connect.impl;
 
 import center.helloworld.transport.mqtt.server.auth.IAuthStrategy;
 import center.helloworld.transport.mqtt.server.channel.ChannelRegister;
-import center.helloworld.transport.mqtt.server.message.WillMessage;
+import center.helloworld.transport.mqtt.server.codec.message.MqttWillMessage;
 import center.helloworld.transport.mqtt.server.protocol.connect.Connect;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
 import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
@@ -147,7 +147,7 @@ public class DefaultConnect implements Connect {
         // TODO 校验ACL
 
         // willMessage序列化存储到redis中会报循环错误，并且错误原因为buffer，不好解决这里就自定义结构
-        WillMessage message = new WillMessage(
+        MqttWillMessage message = new MqttWillMessage(
                 clientId,
                 msg.payload().willTopic(),
                 MqttQoS.valueOf(msg.variableHeader().willQos()),
