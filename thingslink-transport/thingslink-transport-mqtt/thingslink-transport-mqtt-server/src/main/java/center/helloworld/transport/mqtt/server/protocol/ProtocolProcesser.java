@@ -1,6 +1,7 @@
 package center.helloworld.transport.mqtt.server.protocol;
 
 import center.helloworld.transport.mqtt.server.protocol.connect.Connect;
+import center.helloworld.transport.mqtt.server.protocol.disconnect.DisConnect;
 import center.helloworld.transport.mqtt.server.protocol.pingreq.Pingreq;
 import center.helloworld.transport.mqtt.server.protocol.publish.Publish;
 import center.helloworld.transport.mqtt.server.protocol.publish.factory.QosPublishFactory;
@@ -23,6 +24,9 @@ public class ProtocolProcesser {
     private Connect connect;
 
     @Autowired
+    private DisConnect disConnect;
+
+    @Autowired
     private Pingreq ping;
 
     @Autowired
@@ -43,6 +47,14 @@ public class ProtocolProcesser {
      */
     public Connect connectProcess() {
         return connect;
+    }
+
+    /**
+     * 关闭连接
+     * @return
+     */
+    public DisConnect disConnectProcess() {
+        return disConnect;
     }
 
     /**

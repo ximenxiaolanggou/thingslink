@@ -32,11 +32,11 @@ public interface Connect {
     boolean deviceAuth(Channel channel, MqttConnectMessage message);
 
     /**
-     * 重复连接处理
+     * 清除会话处理
      * @param channel
      * @param message
      */
-    boolean multiConnectHandle(Channel channel, MqttConnectMessage message);
+    boolean cleanSessionHandle(Channel channel, MqttConnectMessage message);
 
     /**
      * 心跳处理
@@ -58,7 +58,7 @@ public interface Connect {
      * @param channel
      * @param msg
      */
-    void connAckMessageHandle(Channel channel, MqttConnectMessage msg);
+    void connAckMessageHandle(Channel channel, MqttConnectMessage msg, boolean sessionPresent);
 
     /**
      * 连接处理
@@ -67,17 +67,17 @@ public interface Connect {
      */
      default void process(Channel channel, MqttConnectMessage msg){
          // 解码校验
-         if(!validateDecoderResult(channel, msg) || deviceAuth(channel, msg)) {
+         if(!validateDecoderResult(channel, msg)) {
              return;
          }
 
          // 设备认证校验
-         if(deviceAuth(channel, msg)) {
+         if(!deviceAuth(channel, msg)) {
              return;
          }
 
-         // 重复连接
-         multiConnectHandle(channel, msg);
+         // 清除会话处理
+         boolean sessionPresent = cleanSessionHandle(channel, msg);
 
          // 心跳处理
          heartHandle(channel, msg);
@@ -89,7 +89,7 @@ public interface Connect {
          }
 
          // 连接ACK
-         connAckMessageHandle(channel, msg);
+         connAckMessageHandle(channel, msg, sessionPresent);
 
          // TODO 消息自订阅
 

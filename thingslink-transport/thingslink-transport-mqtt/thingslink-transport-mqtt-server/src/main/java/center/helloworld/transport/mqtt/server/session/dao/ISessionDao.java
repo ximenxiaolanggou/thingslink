@@ -3,6 +3,8 @@ package center.helloworld.transport.mqtt.server.session.dao;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
 import cn.hutool.core.lang.UUID;
 
+import java.util.Set;
+
 /**
  * @author zhishun.cai
  * @date 2024/3/19
@@ -15,10 +17,26 @@ public interface ISessionDao {
      * @param uSessionId
      * @return
      */
-    void storeSession(String uSessionId, Session session);
+    void storeSession(String uSessionId, Session session, long expire);
+
 
     /**
-     * 根据客户端ID获取会话
+     * 存储会话
+     * @param uSessionId
+     * @return
+     */
+    void storeSession(String uSessionId, Session session);
+
+
+    /**
+     * 根据会话ID查询
+     * @param sessionId
+     * @return
+     */
+    Session sessionBySessionId(String sessionId);
+
+    /**
+     * 根据客户端ID查询会话
      * @param clientId
      * @return
      */
@@ -31,4 +49,11 @@ public interface ISessionDao {
     default String generateSessionId() {
         return UUID.randomUUID().toString();
     }
+
+    /**
+     * 删除
+     * @param sessionId
+     */
+    void removeBySessionId(String sessionId);
+
 }

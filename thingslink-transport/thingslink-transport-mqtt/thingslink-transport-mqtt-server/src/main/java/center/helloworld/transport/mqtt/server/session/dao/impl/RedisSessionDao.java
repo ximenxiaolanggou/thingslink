@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 /**
  * @author zhishun.cai
  * @date 2024/3/19
@@ -19,7 +21,8 @@ public class RedisSessionDao implements ISessionDao {
     /**
      * redis 存储key前缀
      */
-    String STORE_PREFIX = "SESSION_";
+    String SESSION_STORE_PREFIX = "transport_mqtt_session_";
+
 
     @Autowired
     private RedisService redisService;
@@ -32,11 +35,55 @@ public class RedisSessionDao implements ISessionDao {
      */
     @Override
     public void storeSession(String uSessionId, Session session) {
-        redisService.set(STORE_PREFIX + uSessionId, session);
+        redisService.set(SESSION_STORE_PREFIX + uSessionId, session);
     }
 
+    /**
+     * 存储会话 会话ID为客户端ID
+     * @param uSessionId | clientId
+     * @param session
+     */
+    @Override
+    public void storeSession(String uSessionId, Session session, long expire) {
+        if(expire < 0) {
+            throw new RuntimeException("expire value must > 0");
+        }
+        redisService.set(SESSION_STORE_PREFIX + uSessionId, session, expire);
+    }
+
+    /**
+     * 根据
+     * @param sessionId
+     * @return
+     */
+    @Override
+    public Session sessionBySessionId(String sessionId) {
+        return (Session) redisService.get(SESSION_STORE_PREFIX + sessionId);
+    }
+
+    /**
+     * 根据客户端ID查询会话
+     * @param clientId
+     * @return
+     */
     @Override
     public Session sessionByClientId(String clientId) {
-        return (Session) redisService.get(STORE_PREFIX + clientId);
+        Set<String> keys = redisService.allKeys(SESSION_STORE_PREFIX + "*");
+        for (String key : keys) {
+            Session session =  (Session) redisService.get(key);
+            if(session.getClientId().equals(clientId)) {
+                return session;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 删除
+     * @param sessionId
+     */
+    @Override
+    public void removeBySessionId(String sessionId) {
+        redisService.del(SESSION_STORE_PREFIX + sessionId);
     }
 }

@@ -2,17 +2,21 @@ package center.helloworld.transport.mqtt.server.protocol.connect.impl;
 
 import center.helloworld.transport.mqtt.server.auth.IAuthStrategy;
 import center.helloworld.transport.mqtt.server.channel.ChannelRegister;
-import center.helloworld.transport.mqtt.server.codec.message.MqttWillMessage;
+import center.helloworld.transport.mqtt.server.message.MqttWillMessage;
 import center.helloworld.transport.mqtt.server.protocol.connect.Connect;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
 import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
+import center.helloworld.transport.mqtt.server.utils.TopicUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * @author zhishun.cai
@@ -75,11 +79,11 @@ public class DefaultConnect implements Connect {
     @Override
     public boolean deviceAuth(Channel channel, MqttConnectMessage message) {
         MqttConnectReturnCode checkCode = this.auth.auth(message);
-        MqttConnAckMessage ackMessage = new MqttConnAckMessage(new MqttFixedHeader(MqttMessageType.CONNACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
-                new MqttConnAckVariableHeader(checkCode, false));
-        channel.writeAndFlush(ackMessage);
         // 拒绝连接
         if(checkCode != MqttConnectReturnCode.CONNECTION_ACCEPTED) {
+            MqttConnAckMessage ackMessage = new MqttConnAckMessage(new MqttFixedHeader(MqttMessageType.CONNACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
+                    new MqttConnAckVariableHeader(checkCode, false));
+            channel.writeAndFlush(ackMessage);
             channel.close();
             return false;
         }
@@ -87,28 +91,36 @@ public class DefaultConnect implements Connect {
     }
 
     /**
-     * 多连接处理
+     *
+     * 清除会话处理
+     *
+     * 详细说明：https://www.emqx.com/zh/blog/mqtt5-new-feature-clean-start-and-session-expiry-interval
      * @param channel
      * @param message
      */
     @Override
-    public boolean multiConnectHandle(Channel channel, MqttConnectMessage message) {
+    public boolean cleanSessionHandle(Channel channel, MqttConnectMessage message) {
+        boolean sessioPresent = false;
+        // 先获取会话
         String clientId = message.payload().clientIdentifier();
         Session session = sessionStorage.sessionByClientId(clientId);
-        if(session != null) {// 会话已存在 - 新会话顶掉旧会话
-            String sessionId = session.getSessionId();
-            // 删除会话
-            Channel toRemoveChannel = channelRegister.getChannel(sessionId);
-            MqttReasonCodes.Disconnect disconnectCode = MqttReasonCodes.Disconnect.CONNECTION_RATE_EXCEEDED;
-            toRemoveChannel.writeAndFlush(disconnectCode);
-            toRemoveChannel.close();
-            // 删除会话
-            channelRegister.removeChannel(sessionId);
-            // 删除会话存储数据 TODO 可以保留并让新会话发送
-            return true;
-        }
+        if(session != null) {
+            // 会话存在
+            sessioPresent = true;
+            // 之前有会话连接
+            if(session.isActive()) {
+                // 会话处于连接状态，关闭之前连接（新连接顶掉旧连接）
+                Channel toRemoveChannel = channelRegister.getChannel(session.getSessionId());
+                if(toRemoveChannel != null) {
+                    MqttReasonCodes.Disconnect disconnectCode = MqttReasonCodes.Disconnect.CONNECTION_RATE_EXCEEDED;
+                    toRemoveChannel.writeAndFlush(disconnectCode);
+                    toRemoveChannel.close();
+                    channelRegister.removeChannel(session.getSessionId());
+                }
+            }
 
-        return false;
+        }
+        return sessioPresent;
     }
 
     /**
@@ -139,34 +151,46 @@ public class DefaultConnect implements Connect {
     @Override
     public Session willMessageHandle(Channel channel, MqttConnectMessage msg) {
         String clientId = msg.payload().clientIdentifier();
-        ChannelId channelId = channel.id();
         boolean isCleanSession = msg.variableHeader().isCleanSession();
-        // 存在遗言， 校验topic是否合法，TODO 校验ACL
-        Session session = new Session(clientId,  channelId, isCleanSession, null, 0);
+        Session session = new Session(clientId, isCleanSession, null, 0);
+        if(msg.variableHeader().isWillFlag()) {
+            // 存在遗言，校验topic
+            String willTopic = msg.payload().willTopic();
+            if(willTopic == null || willTopic.trim() == "" || TopicUtil.validTopic(willTopic)) {
+                // will topic 不合规
+                MqttConnAckMessage connAckMessage = (MqttConnAckMessage) MqttMessageFactory.newMessage(
+                        new MqttFixedHeader(MqttMessageType.CONNACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
+                        new MqttConnAckVariableHeader(MqttConnectReturnCode.CONNECTION_REFUSED_TOPIC_NAME_INVALID, false), null);
+                channel.writeAndFlush(connAckMessage);
+                channel.close();
+                return null;
+            }
+            // TODO topic ACL控制
 
-        // TODO 校验ACL
-
-        // willMessage序列化存储到redis中会报循环错误，并且错误原因为buffer，不好解决这里就自定义结构
-        MqttWillMessage message = new MqttWillMessage(
-                clientId,
-                msg.payload().willTopic(),
-                MqttQoS.valueOf(msg.variableHeader().willQos()),
-               0,
-                msg.payload().willMessageInBytes(),
-                false,
-                msg.variableHeader().isWillRetain(),
-                true,
-                0
-        );
-
-        return null;
+            // 存储一样消息
+            // willMessage序列化存储到redis中会报循环错误，并且错误原因为buffer，不好解决这里就自定义结构
+            MqttWillMessage willMessage = new MqttWillMessage(
+                    clientId,
+                    msg.payload().willTopic(),
+                    MqttQoS.valueOf(msg.variableHeader().willQos()),
+                    msg.payload().willMessageInBytes());
+            session.setWillMessage(willMessage);
+        }
+        // 至此存储会话信息及返回接受客户端连接
+        sessionStorage.storeSession(session.getSessionId(), session);
+        // 存储 会话和channel关系
+        channelRegister.registerChannel(session.getSessionId(), channel);
+        // 将clientId存储到channel的map中
+        channel.attr(AttributeKey.valueOf("clientIdentifier")).set(clientId);
+        channel.attr(AttributeKey.valueOf("sessionId")).set(session.getSessionId());
+        return session;
     }
 
 
     @Override
-    public void connAckMessageHandle(Channel channel, MqttConnectMessage msg) {
+    public void connAckMessageHandle(Channel channel, MqttConnectMessage msg, boolean sessionPresent) {
         // 返回应答
-        boolean sessionPresent = false /*sessionStoreService.containsKey(msg.payload().clientIdentifier()) && !msg.variableHeader().isCleanSession()*/;
+        sessionPresent = sessionPresent && !msg.variableHeader().isCleanSession();
         MqttConnAckMessage okResp = (MqttConnAckMessage) MqttMessageFactory.newMessage(
                 new MqttFixedHeader(MqttMessageType.CONNACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
                 new MqttConnAckVariableHeader(MqttConnectReturnCode.CONNECTION_ACCEPTED, sessionPresent), null);

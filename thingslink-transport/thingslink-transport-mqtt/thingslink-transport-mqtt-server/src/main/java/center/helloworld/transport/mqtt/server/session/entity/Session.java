@@ -1,10 +1,13 @@
 package center.helloworld.transport.mqtt.server.session.entity;
 
+import center.helloworld.transport.mqtt.server.message.MqttWillMessage;
 import io.netty.channel.ChannelId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.logging.log4j.message.Message;
+
+import java.util.UUID;
 
 /**
  * @author zhishun.cai
@@ -17,17 +20,13 @@ import org.apache.logging.log4j.message.Message;
 @NoArgsConstructor
 public class Session {
 
-    private String sessionId;
+    private String sessionId = UUID.randomUUID().toString();
 
     private String clientId;
 
-    private ChannelId channelId;
-
     private boolean cleanSession;
 
-    private Message willMessage;
-
-    private boolean hasWillMessage = false;
+    private MqttWillMessage willMessage;
 
     private int expire;
 
@@ -36,9 +35,8 @@ public class Session {
      */
     private boolean active = true;
 
-    public Session(String clientId, ChannelId channelId, boolean cleanSession, Message willMessage, int expire) {
+    public Session(String clientId, boolean cleanSession, MqttWillMessage willMessage, int expire) {
         this.clientId = clientId;
-        this.channelId = channelId;
         this.cleanSession = cleanSession;
         this.willMessage = willMessage;
         this.expire = expire;

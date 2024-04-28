@@ -11,5 +11,36 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 public interface DisConnect {
 
     default void disConnectProcess(Channel channel, MqttMessage msg) {
+        broadcastWillMessage(channel, msg);
+        clearResource(channel);
+        disConnect(channel);
+        broadcastDisConnected(channel);
+    }
+
+    /**
+     * 广播 will 消息
+     * @param channel
+     * @param msg
+     */
+    void broadcastWillMessage(Channel channel, MqttMessage msg);
+
+    /**
+     * 清除占用资源
+     * @param channel
+     */
+    void clearResource(Channel channel);
+
+    /**
+     * 关闭连接
+     * @param channel
+     */
+    void disConnect(Channel channel);
+
+    /**
+     * 广播关闭连接消息
+     * @param channel
+     */
+    default void broadcastDisConnected(Channel channel) {
+
     }
 }

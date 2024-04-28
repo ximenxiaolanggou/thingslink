@@ -1,12 +1,17 @@
 package center.helloworld.transport.mqtt.server.handler;
 
+import center.helloworld.transport.mqtt.server.channel.ChannelRegister;
 import center.helloworld.transport.mqtt.server.protocol.ProtocolProcesser;
+import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
+import center.helloworld.transport.mqtt.server.session.entity.Session;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.mqtt.*;
+import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,12 +21,18 @@ import org.springframework.stereotype.Component;
  * @note
  */
 @Slf4j
-@ChannelHandler.Sharable
 @Component
-public class MqttServerMessageHandler_Bak extends SimpleChannelInboundHandler<MqttMessage> {
+@ChannelHandler.Sharable
+public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMessage> {
 
     @Autowired
     private ProtocolProcesser protocolProcesser;
+
+    @Autowired
+    private ISessionDao sessionDao;
+
+    @Autowired
+    private ChannelRegister channelRegister;
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, MqttMessage mqttMessage) throws Exception {
@@ -29,11 +40,13 @@ public class MqttServerMessageHandler_Bak extends SimpleChannelInboundHandler<Mq
         MqttMessageType msgType = mqttMessage.fixedHeader().messageType();
         switch (msgType) {
             case CONNECT -> protocolProcesser.connectProcess().process(channel, (MqttConnectMessage) mqttMessage);
+            case DISCONNECT -> protocolProcesser.disConnectProcess().disConnectProcess(channel, mqttMessage);
             case PINGREQ -> protocolProcesser.pingProcess().process(channel, mqttMessage);
             case PUBLISH -> protocolProcesser.publishProcess((MqttPublishMessage) mqttMessage).process(channel, (MqttPublishMessage) mqttMessage);
             case PUBREL -> protocolProcesser.pubRelProcess().process(channel, (MqttMessageIdVariableHeader) mqttMessage.variableHeader());
             case SUBSCRIBE -> protocolProcesser.subscribeProcess().process(channel, (MqttSubscribeMessage) mqttMessage);
             case UNSUBSCRIBE -> protocolProcesser.unsubscribeProcess().process(channel, (MqttUnsubscribeMessage) mqttMessage);
+            default -> throw new RuntimeException("not should here");
         }
         log.info("message type is {}", msgType);
         log.info("channelRead0 message -> {}", mqttMessage.toString());
@@ -60,7 +73,30 @@ public class MqttServerMessageHandler_Bak extends SimpleChannelInboundHandler<Mq
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        log.info("channelInactive ~~");
+        String sessionId = null;
+        try {
+            Channel channel = ctx.channel();
+            Object sessionIdObj = (String)channel.attr(AttributeKey.valueOf("sessionId")).get();
+            if(sessionIdObj != null) {
+                sessionId = (String) sessionIdObj;
+                // TODO 会话处理
+                Session session = sessionDao.sessionBySessionId(sessionId);
+                if(session != null && session.isCleanSession()) {
+                    sessionDao.removeBySessionId(sessionId);
+                    // TODO 删除其余数据
+                }
+                // TODO 遗言处理
+                log.debug("DISCONNECT - clientId: {}", sessionId);
+                System.out.println("disConnectProcess");
+            }
+            channel.close();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            if(StringUtils.isNotBlank(sessionId)) {
+                channelRegister.removeChannel(sessionId);
+            }
+        }
     }
 
     @Override
