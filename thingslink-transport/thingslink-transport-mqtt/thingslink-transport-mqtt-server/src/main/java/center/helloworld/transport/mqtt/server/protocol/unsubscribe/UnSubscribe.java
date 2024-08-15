@@ -12,5 +12,14 @@ import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 public interface UnSubscribe {
 
     default void process(Channel channel, MqttUnsubscribeMessage message) {
+        unSubscribe(channel, message);
     }
+
+
+    /**
+     * 取消订阅
+     * @param channel
+     * @param message
+     */
+    void unSubscribe(Channel channel, MqttUnsubscribeMessage message);
 }

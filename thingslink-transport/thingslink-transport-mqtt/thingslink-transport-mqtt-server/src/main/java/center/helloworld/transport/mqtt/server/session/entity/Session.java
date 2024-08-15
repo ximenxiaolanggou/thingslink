@@ -24,6 +24,8 @@ public class Session {
 
     private String clientId;
 
+    private ChannelId channelId;
+
     private boolean cleanSession;
 
     private MqttWillMessage willMessage;

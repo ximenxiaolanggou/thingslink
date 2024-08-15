@@ -5,18 +5,15 @@ import center.helloworld.transport.mqtt.server.channel.ChannelRegister;
 import center.helloworld.transport.mqtt.server.message.MqttWillMessage;
 import center.helloworld.transport.mqtt.server.protocol.connect.Connect;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
-import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
+import center.helloworld.transport.mqtt.server.session.SessionStore;
 import center.helloworld.transport.mqtt.server.utils.TopicUtil;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelId;
 import io.netty.handler.codec.mqtt.*;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * @author zhishun.cai
@@ -32,7 +29,7 @@ public class DefaultConnect implements Connect {
     private IAuthStrategy auth;
 
     @Autowired
-    private ISessionDao sessionStorage;
+    private SessionStore sessionStorage;
 
     @Autowired
     private ChannelRegister channelRegister;
@@ -100,27 +97,31 @@ public class DefaultConnect implements Connect {
      */
     @Override
     public boolean cleanSessionHandle(Channel channel, MqttConnectMessage message) {
-        boolean sessioPresent = false;
         // 先获取会话
         String clientId = message.payload().clientIdentifier();
+        boolean cleanSession = message.variableHeader().isCleanSession();
         Session session = sessionStorage.sessionByClientId(clientId);
-        if(session != null) {
-            // 会话存在
-            sessioPresent = true;
-            // 之前有会话连接
-            if(session.isActive()) {
-                // 会话处于连接状态，关闭之前连接（新连接顶掉旧连接）
-                Channel toRemoveChannel = channelRegister.getChannel(session.getSessionId());
-                if(toRemoveChannel != null) {
-                    MqttReasonCodes.Disconnect disconnectCode = MqttReasonCodes.Disconnect.CONNECTION_RATE_EXCEEDED;
-                    toRemoveChannel.writeAndFlush(disconnectCode);
-                    toRemoveChannel.close();
-                    channelRegister.removeChannel(session.getSessionId());
-                }
-            }
 
+        if(session != null && session.isActive()) {
+            // 会话处于连接状态，关闭之前连接（新连接顶掉旧连接）|| 或者服务端突然down掉
+            Channel toRemoveChannel = channelRegister.getChannel(session.getSessionId());
+            if(toRemoveChannel != null) {
+                // 正常情况
+                MqttReasonCodes.Disconnect disconnectCode = MqttReasonCodes.Disconnect.CONNECTION_RATE_EXCEEDED;
+                toRemoveChannel.writeAndFlush(disconnectCode);
+                toRemoveChannel.close();
+                channelRegister.removeChannel(session.getSessionId());
+            }
         }
-        return sessioPresent;
+
+        if(cleanSession) {
+            // 清除会话和相关脏数据
+            if(session != null) {
+                sessionStorage.removeBySessionId(session.getSessionId());
+                // TODO 删除脏数据
+            }
+        }
+        return session != null;
     }
 
     /**
@@ -152,7 +153,16 @@ public class DefaultConnect implements Connect {
     public Session willMessageHandle(Channel channel, MqttConnectMessage msg) {
         String clientId = msg.payload().clientIdentifier();
         boolean isCleanSession = msg.variableHeader().isCleanSession();
-        Session session = new Session(clientId, isCleanSession, null, 0);
+        Session session = new Session(clientId, isCleanSession, null, (int)msg.variableHeader().properties().getProperty(17).value());
+
+        if(!isCleanSession) {
+            // 不清除会话,则使用相同session id（新连接相关配置信息可能修改，这里不使用之前的配置信息）
+            Session oSession = sessionStorage.sessionByClientId(clientId);
+            if(oSession != null) {
+                session.setSessionId(oSession.getSessionId());
+            }
+        }
+
         if(msg.variableHeader().isWillFlag()) {
             // 存在遗言，校验topic
             String willTopic = msg.payload().willTopic();
@@ -177,6 +187,7 @@ public class DefaultConnect implements Connect {
             session.setWillMessage(willMessage);
         }
         // 至此存储会话信息及返回接受客户端连接
+        session.setChannelId(channel.id());
         sessionStorage.storeSession(session.getSessionId(), session);
         // 存储 会话和channel关系
         channelRegister.registerChannel(session.getSessionId(), channel);

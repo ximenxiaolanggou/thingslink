@@ -1,12 +1,14 @@
-package center.helloworld.transport.mqtt.server.session.dao.impl;
+package center.helloworld.transport.mqtt.server.session.dao;
 
-import center.helloworld.starter.redis.service.RedisService;
-import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
+import center.helloworld.transport.mqtt.server.session.SessionStore;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
+import center.helloworld.transport.mqtt.server.storage.IStorageMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,17 +18,17 @@ import java.util.Set;
  */
 @Component
 @ConditionalOnProperty(value = "thingslink.transport.mqtt.storageMode", havingValue = "redis", matchIfMissing = false)
-public class RedisSessionDao implements ISessionDao {
+public class SessionStoreDao extends SessionStore {
 
     /**
      * redis 存储key前缀
      */
     String SESSION_STORE_PREFIX = "transport_mqtt_session_";
 
-
     @Autowired
-    private RedisService redisService;
-
+    public SessionStoreDao(IStorageMode<Session> storageMode) {
+        super(storageMode);
+    }
 
     /**
      * 存储会话 会话ID为客户端ID
@@ -35,7 +37,7 @@ public class RedisSessionDao implements ISessionDao {
      */
     @Override
     public void storeSession(String uSessionId, Session session) {
-        redisService.set(SESSION_STORE_PREFIX + uSessionId, session);
+        storageMode.put(SESSION_STORE_PREFIX + uSessionId, session, 0L);
     }
 
     /**
@@ -48,7 +50,7 @@ public class RedisSessionDao implements ISessionDao {
         if(expire < 0) {
             throw new RuntimeException("expire value must > 0");
         }
-        redisService.set(SESSION_STORE_PREFIX + uSessionId, session, expire);
+        storageMode.put(SESSION_STORE_PREFIX + uSessionId, session, expire);
     }
 
     /**
@@ -58,7 +60,7 @@ public class RedisSessionDao implements ISessionDao {
      */
     @Override
     public Session sessionBySessionId(String sessionId) {
-        return (Session) redisService.get(SESSION_STORE_PREFIX + sessionId);
+        return (Session) storageMode.get(SESSION_STORE_PREFIX + sessionId);
     }
 
     /**
@@ -68,9 +70,9 @@ public class RedisSessionDao implements ISessionDao {
      */
     @Override
     public Session sessionByClientId(String clientId) {
-        Set<String> keys = redisService.allKeys(SESSION_STORE_PREFIX + "*");
+        Set<String> keys = storageMode.allKeys(SESSION_STORE_PREFIX + "*");
         for (String key : keys) {
-            Session session =  (Session) redisService.get(key);
+            Session session =  (Session) storageMode.get(key);
             if(session.getClientId().equals(clientId)) {
                 return session;
             }
@@ -84,6 +86,23 @@ public class RedisSessionDao implements ISessionDao {
      */
     @Override
     public void removeBySessionId(String sessionId) {
-        redisService.del(SESSION_STORE_PREFIX + sessionId);
+        storageMode.remove(SESSION_STORE_PREFIX + sessionId);
+    }
+
+    /**
+     * 获取所有clean session为true的会话
+     * @return
+     */
+    @Override
+    public List<Session> findAllCleanSession() {
+        List<Session> cleanSessions = new ArrayList();
+        Set<String> keys = storageMode.allKeys(SESSION_STORE_PREFIX + "*");
+        for (String key : keys) {
+            Session session =  (Session) storageMode.get(key);
+           if(session.isCleanSession()) {
+               cleanSessions.add(session);
+           }
+        }
+        return cleanSessions;
     }
 }

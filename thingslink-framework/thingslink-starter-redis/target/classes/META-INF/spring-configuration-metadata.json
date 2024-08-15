@@ -11,8 +11,7 @@
       "name": "thingslink.starter.redis.enable",
       "type": "java.lang.Boolean",
       "description": "是否开启Lettuce Redis",
-      "sourceType": "center.helloworld.starter.redis.properties.LettuceRedisProperties",
-      "defaultValue": true
+      "sourceType": "center.helloworld.starter.redis.properties.LettuceRedisProperties"
     }
   ],
   "hints": []

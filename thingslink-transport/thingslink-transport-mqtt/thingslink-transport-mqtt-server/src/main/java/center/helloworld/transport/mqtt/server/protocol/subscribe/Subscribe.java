@@ -18,13 +18,12 @@ public interface Subscribe {
      * @param channel
      * @param message
      */
-    default void onErr(Channel channel, MqttSubscribeMessage message) {
+    default void onErr(Channel channel, MqttSubscribeMessage message, int reasonCode) {
         MqttSubAckMessage subAckMessage = (MqttSubAckMessage) MqttMessageFactory.newMessage(
                 new MqttFixedHeader(MqttMessageType.SUBACK, false, MqttQoS.AT_MOST_ONCE, false, 0),
                 MqttMessageIdVariableHeader.from(message.variableHeader().messageId()),
-                new MqttSubAckPayload(HexUtil.hexToInt("90")));
+                new MqttSubAckPayload(reasonCode));
         channel.writeAndFlush(subAckMessage);
-        channel.close();
     }
 
     /**
@@ -33,9 +32,13 @@ public interface Subscribe {
      * @param message
      */
     default void process(Channel channel, MqttSubscribeMessage message) {
-
         if(!validTopic(channel, message) || !aclTopic(channel, message)) {
-            onErr(channel, message);
+            onErr(channel, message, 0xA1);
+            return;
+        }
+
+        if(!aclTopic(channel, message)) {
+            onErr(channel, message, 0x87);
             return;
         }
         subAck(channel, message);

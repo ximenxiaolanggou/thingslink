@@ -2,13 +2,12 @@ package center.helloworld.transport.mqtt.server.protocol.disconnect.impl;
 
 import center.helloworld.transport.mqtt.server.channel.ChannelRegister;
 import center.helloworld.transport.mqtt.server.protocol.disconnect.DisConnect;
-import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
+import center.helloworld.transport.mqtt.server.session.SessionStore;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,17 +25,7 @@ public class DefaultDisConnect implements DisConnect {
     private ChannelRegister channelRegister;
 
     @Autowired
-    private ISessionDao sessionDao;
-
-    /**
-     * 关闭连接处理
-     * @param channel
-     * @param msg
-     */
-    @Override
-    public void disConnectProcess(Channel channel, MqttMessage msg) {
-
-    }
+    private SessionStore sessionDao;
 
     /**
      * 广播遗言消息
@@ -54,7 +43,18 @@ public class DefaultDisConnect implements DisConnect {
      */
     @Override
     public void clearResource(Channel channel) {
+        String sessionId = (String) channel.attr(AttributeKey.valueOf("sessionId")).get();
+        // 1. 会话清除
+        Session session = sessionDao.sessionBySessionId(sessionId);
+        if(session != null && session.getExpire() == 0) {
+            // 会话过期时长设置为0
+            // 清除会话
+            sessionDao.removeBySessionId(sessionId);
+            // TODO 清除会话相关数据
+        }
 
+        // 标志清除完成（避免在handler中做重复操作）
+        channel.attr(AttributeKey.valueOf("cleanCache")).set(true);
     }
 
     /**
@@ -63,7 +63,7 @@ public class DefaultDisConnect implements DisConnect {
      */
     @Override
     public void disConnect(Channel channel) {
-        String clientId = (String) channel.attr(AttributeKey.valueOf("clientId")).get();
+        String clientId = (String) channel.attr(AttributeKey.valueOf("clientIdentifier")).get();
         log.debug("DISCONNECT - clientId: {}", clientId);
         channel.close();
     }

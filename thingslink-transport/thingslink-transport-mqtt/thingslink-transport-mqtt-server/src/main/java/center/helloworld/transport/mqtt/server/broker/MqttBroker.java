@@ -1,6 +1,7 @@
 package center.helloworld.transport.mqtt.server.broker;
 
 import center.helloworld.transport.mqtt.server.handler.MqttBrokerChannelInitializer;
+import center.helloworld.transport.mqtt.server.session.SessionStore;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -25,12 +26,18 @@ public class MqttBroker implements CommandLineRunner {
     @Autowired
     private MqttBrokerChannelInitializer mqttBrokerChannelInitializer;
 
+    @Autowired
+    private SessionStore sessionDao;
+
     private NioEventLoopGroup bossGroup;
 
     private NioEventLoopGroup workGroup;
 
+
     @Override
     public void run(String... args) throws Exception {
+        // 1. 清除脏数据
+//        List<Session> dirtySession = sessionDao.findAllCleanSession();
         mqttBrokerStart();
     }
 

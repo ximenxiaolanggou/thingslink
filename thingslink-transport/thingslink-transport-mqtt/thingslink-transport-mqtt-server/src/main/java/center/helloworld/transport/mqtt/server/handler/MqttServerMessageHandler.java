@@ -2,7 +2,8 @@ package center.helloworld.transport.mqtt.server.handler;
 
 import center.helloworld.transport.mqtt.server.channel.ChannelRegister;
 import center.helloworld.transport.mqtt.server.protocol.ProtocolProcesser;
-import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
+import center.helloworld.transport.mqtt.server.protocol.publish.observer.PublishMessageSubject;
+import center.helloworld.transport.mqtt.server.session.SessionStore;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -29,10 +30,13 @@ public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMe
     private ProtocolProcesser protocolProcesser;
 
     @Autowired
-    private ISessionDao sessionDao;
+    private SessionStore sessionDao;
 
     @Autowired
     private ChannelRegister channelRegister;
+
+    @Autowired
+    private PublishMessageSubject publishMessageSubject;
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, MqttMessage mqttMessage) throws Exception {
@@ -42,7 +46,7 @@ public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMe
             case CONNECT -> protocolProcesser.connectProcess().process(channel, (MqttConnectMessage) mqttMessage);
             case DISCONNECT -> protocolProcesser.disConnectProcess().disConnectProcess(channel, mqttMessage);
             case PINGREQ -> protocolProcesser.pingProcess().process(channel, mqttMessage);
-            case PUBLISH -> protocolProcesser.publishProcess((MqttPublishMessage) mqttMessage).process(channel, (MqttPublishMessage) mqttMessage);
+            case PUBLISH -> protocolProcesser.publishProcess((MqttPublishMessage) mqttMessage).process(publishMessageSubject, channel, (MqttPublishMessage) mqttMessage);
             case PUBREL -> protocolProcesser.pubRelProcess().process(channel, (MqttMessageIdVariableHeader) mqttMessage.variableHeader());
             case SUBSCRIBE -> protocolProcesser.subscribeProcess().process(channel, (MqttSubscribeMessage) mqttMessage);
             case UNSUBSCRIBE -> protocolProcesser.unsubscribeProcess().process(channel, (MqttUnsubscribeMessage) mqttMessage);
@@ -75,13 +79,15 @@ public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMe
         super.channelInactive(ctx);
         String sessionId = null;
         try {
+            Object cleanCacheObj = ctx.channel().attr(AttributeKey.valueOf("cleanCache")).get();
+            // 当cleanCache为空时代表客户端突然下线，没有走DISCONNECT报文
             Channel channel = ctx.channel();
             Object sessionIdObj = (String)channel.attr(AttributeKey.valueOf("sessionId")).get();
             if(sessionIdObj != null) {
                 sessionId = (String) sessionIdObj;
                 // TODO 会话处理
                 Session session = sessionDao.sessionBySessionId(sessionId);
-                if(session != null && session.isCleanSession()) {
+                if(session != null && cleanCacheObj == null && session.getExpire() == 0) {
                     sessionDao.removeBySessionId(sessionId);
                     // TODO 删除其余数据
                 }
@@ -98,7 +104,6 @@ public class MqttServerMessageHandler extends SimpleChannelInboundHandler<MqttMe
             }
         }
     }
-
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         super.channelReadComplete(ctx);
