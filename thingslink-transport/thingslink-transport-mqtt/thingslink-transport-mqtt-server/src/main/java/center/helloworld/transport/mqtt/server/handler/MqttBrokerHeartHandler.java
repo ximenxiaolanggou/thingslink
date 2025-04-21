@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 @ChannelHandler.Sharable
 @Component
 public class MqttBrokerHeartHandler extends ChannelDuplexHandler {
+
+    public static final String HANDLER_NAME = "heartHandler";
+
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         IdleStateEvent event = (IdleStateEvent) evt;

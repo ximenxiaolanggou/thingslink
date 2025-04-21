@@ -46,6 +46,15 @@ public interface Connect {
      */
     int heartHandle(Channel channel, MqttConnectMessage msg);
 
+
+    /**
+     * MQTT处理器
+     * @param channel
+     * @param msg
+     * @return
+     */
+    void pipelineAddHadnler(Channel channel, MqttConnectMessage msg);
+
     /**
      * Willing 消息处理
      * @param channel
@@ -58,7 +67,7 @@ public interface Connect {
      * @param channel
      * @param msg
      */
-    void connAckMessageHandle(Channel channel, MqttConnectMessage msg);
+    void responseAckMessageHandle(Channel channel, MqttConnectMessage msg);
 
     /**
      * 连接处理
@@ -66,30 +75,33 @@ public interface Connect {
      * @param msg
      */
      default void process(Channel channel, MqttConnectMessage msg){
-         // 解码校验
-         if(!validateDecoderResult(channel, msg) || deviceAuth(channel, msg)) {
+         // 1、解码校验
+         if(!validateDecoderResult(channel, msg)) {
              return;
          }
 
-         // 设备认证校验
-         if(deviceAuth(channel, msg)) {
+         // 2、设备认证校验
+         if(!deviceAuth(channel, msg)) {
              return;
          }
 
-         // 重复连接
+         // 3、重复连接
          multiConnectHandle(channel, msg);
 
-         // 心跳处理
+         // 4、添加心跳处理器
          heartHandle(channel, msg);
 
-         // 遗言消息处理
+         // 4、添加处理器
+         pipelineAddHadnler(channel, msg);
+
+         // 5、遗言消息处理
          Session session = willMessageHandle(channel, msg);
          if(session == null) {
              return;
          }
 
-         // 连接ACK
-         connAckMessageHandle(channel, msg);
+         // 6、响应ACK
+         responseAckMessageHandle(channel, msg);
 
          // TODO 消息自订阅
 

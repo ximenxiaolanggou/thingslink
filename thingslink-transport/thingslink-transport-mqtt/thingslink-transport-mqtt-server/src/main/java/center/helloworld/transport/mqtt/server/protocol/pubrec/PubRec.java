@@ -1,5 +1,6 @@
 package center.helloworld.transport.mqtt.server.protocol.pubrec;
 
+import center.helloworld.transport.mqtt.server.mqttextendmsg.MqttPubRecMessage;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
 
@@ -13,7 +14,7 @@ public interface PubRec {
     /**
      * pubrec事件处理方法
      * @param channel
-     * @param variableHeader
+     * @param mqttPubRecMessage
      */
-    public void processPubRec(Channel channel, MqttMessageIdVariableHeader variableHeader);
+    public void processPubRec(Channel channel, MqttPubRecMessage mqttPubRecMessage);
 }

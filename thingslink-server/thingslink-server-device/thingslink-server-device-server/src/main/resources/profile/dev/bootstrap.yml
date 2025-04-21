@@ -10,13 +10,13 @@ spring:
       discovery:
         username: nacos
         password: nacos
-        namespace: thingslink
-        server-addr: nacos.helloworld.center
+        namespace: thingslink-dev
+        server-addr: 127.0.0.1:8848
       config:
         username: nacos
         password: nacos
-        namespace: thingslink
-        server-addr: nacos.helloworld.center
+        namespace: thingslink-dev
+        server-addr: 127.0.0.1:8848
         # 配置文件格式
         file-extension: yml
   main:

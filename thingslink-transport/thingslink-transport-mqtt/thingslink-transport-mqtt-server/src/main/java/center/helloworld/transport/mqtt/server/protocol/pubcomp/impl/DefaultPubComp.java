@@ -1,5 +1,6 @@
 package center.helloworld.transport.mqtt.server.protocol.pubcomp.impl;
 
+import center.helloworld.transport.mqtt.server.mqttextendmsg.MqttPubCompMessage;
 import center.helloworld.transport.mqtt.server.protocol.pubcomp.PubComp;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class DefaultPubComp implements PubComp {
     @Override
-    public void processPubComp(Channel channel, MqttMessageIdVariableHeader variableHeader) {
-        int messageId = variableHeader.messageId();
+    public void processPubComp(Channel channel, MqttPubCompMessage mqttPubCompMessage) {
+        int messageId = mqttPubCompMessage.variableHeader().messageId();
         // TODO 删除消息
     }
 }

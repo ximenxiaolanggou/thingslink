@@ -17,8 +17,13 @@ import org.springframework.stereotype.Component;
 public class MqttConfigProperty {
 
     /**
-     * 会话存储策略 # memory(默认) | redis | mysql
+     * 存储策略 # memory(默认) | redis | mysql
      */
-    private String sessionStorageMode = "memory";
+    private String storageMode = "redis";
+
+    /**
+     * broker启动端口
+     */
+    private Integer brokerPort = 1883;
 
 }

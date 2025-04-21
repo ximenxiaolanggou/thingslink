@@ -3,9 +3,11 @@ package center.helloworld.transport.mqtt.server.session.dao.impl;
 import center.helloworld.starter.redis.service.RedisService;
 import center.helloworld.transport.mqtt.server.session.dao.ISessionDao;
 import center.helloworld.transport.mqtt.server.session.entity.Session;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 /**
  * @author zhishun.cai
@@ -19,7 +21,7 @@ public class RedisSessionDao implements ISessionDao {
     /**
      * redis 存储key前缀
      */
-    String STORE_PREFIX = "SESSION_";
+    String STORE_PREFIX = "TL_SESSION_";
 
     @Autowired
     private RedisService redisService;
@@ -38,5 +40,14 @@ public class RedisSessionDao implements ISessionDao {
     @Override
     public Session sessionByClientId(String clientId) {
         return (Session) redisService.get(STORE_PREFIX + clientId);
+    }
+
+    /**
+     * 根据会话ID删除会话
+     * @param sessionId
+     */
+    @Override
+    public void removeSession(String sessionId) {
+        redisService.del(STORE_PREFIX + sessionId);
     }
 }

@@ -1,5 +1,6 @@
 package center.helloworld.transport.mqtt.server.protocol.pubcomp;
 
+import center.helloworld.transport.mqtt.server.mqttextendmsg.MqttPubCompMessage;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
 
@@ -13,7 +14,7 @@ public interface PubComp {
     /**
      * pubcomp处理事件
      * @param channel
-     * @param variableHeader
+     * @param mqttPubCompMessage
      */
-    void processPubComp(Channel channel, MqttMessageIdVariableHeader variableHeader);
+    void processPubComp(Channel channel, MqttPubCompMessage mqttPubCompMessage);
 }

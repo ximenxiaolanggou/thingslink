@@ -2,6 +2,7 @@ package center.helloworld.transport.mqtt.server.protocol.puback;
 
 import io.netty.channel.Channel;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
+import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 
 /**
  * @author zhishun.cai
@@ -14,9 +15,9 @@ public interface PubAck {
     /**
      * pub ack 消息处理
      * @param channel
-     * @param mqttMessageIdVariableHeader
+     * @param mqttPubAckMessage
      */
-    default void process(Channel channel, MqttMessageIdVariableHeader mqttMessageIdVariableHeader) {
+    default void process(Channel channel,  MqttPubAckMessage mqttPubAckMessage) {
 
     }
 }

@@ -25,6 +25,12 @@ public interface ISessionDao {
     Session sessionByClientId(String clientId);
 
     /**
+     * 根据会话ID删除会话
+     * @param sessionId
+     */
+    void removeSession(String sessionId);
+
+    /**
      * 生成会话ID
      * @return TODO 可以将该方法抽取成会话ID生成策略，便于后续分布式部署
      */

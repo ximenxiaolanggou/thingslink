@@ -63,7 +63,7 @@ public class Device extends Model<Device> {
     /**
      * 0离线 1 在线
      */
-    private Integer online = 0;
+    private Integer isOnline = 0;
 
     /**
      * 产品ID

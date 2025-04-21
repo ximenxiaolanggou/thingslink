@@ -10,6 +10,6 @@ import io.netty.handler.codec.mqtt.MqttMessage;
  */
 public interface DisConnect {
 
-    default void disConnectProcess(Channel channel, MqttMessage msg) {
+    default void process(Channel channel, MqttMessage msg) {
     }
 }

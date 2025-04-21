@@ -19,18 +19,18 @@ public class MemChannelRegister implements ChannelRegister {
     private static Map<String, Channel> channels = new ConcurrentHashMap();
 
     @Override
-    public void registerChannel(String sessionId, Channel channel) {
-        channels.put(sessionId, channel);
+    public void registerChannel(String clientId, Channel channel) {
+        channels.put(clientId, channel);
     }
 
     @Override
-    public void removeChannel(String sessionId) {
-        channels.remove(sessionId);
+    public void removeChannel(String clientId) {
+        channels.remove(clientId);
     }
 
     @Override
-    public Channel getChannel(String sessionId) {
-        return channels.get(sessionId);
+    public Channel getChannel(String clientId) {
+        return channels.get(clientId);
     }
 
     /**

@@ -16,7 +16,7 @@ public class DefaultDisConnect implements DisConnect {
 
 
     @Override
-    public void disConnectProcess(Channel channel, MqttMessage msg) {
+    public void process(Channel channel, MqttMessage msg) {
         System.out.println("disConnectProcess");
         channel.close();
     }

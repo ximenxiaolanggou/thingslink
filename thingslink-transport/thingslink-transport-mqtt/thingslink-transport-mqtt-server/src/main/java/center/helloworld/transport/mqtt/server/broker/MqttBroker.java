@@ -1,6 +1,7 @@
 package center.helloworld.transport.mqtt.server.broker;
 
 import center.helloworld.transport.mqtt.server.handler.MqttBrokerChannelInitializer;
+import center.helloworld.transport.mqtt.server.properties.MqttConfigProperty;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -21,6 +22,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class MqttBroker implements CommandLineRunner {
+
+    @Autowired
+    private MqttConfigProperty mqttConfigProperty;
 
     @Autowired
     private MqttBrokerChannelInitializer mqttBrokerChannelInitializer;
@@ -54,12 +58,12 @@ public class MqttBroker implements CommandLineRunner {
 
 
             bootstrap.childHandler(mqttBrokerChannelInitializer);
-            ChannelFuture f = bootstrap.bind(1883).sync();
+            ChannelFuture f = bootstrap.bind(mqttConfigProperty.getBrokerPort()).sync();
             if (f.isSuccess()) {
-                log.info("Mqtt Broker start success port：{}", 1883);
+                log.info("Mqtt Broker start success port：{}", mqttConfigProperty.getBrokerPort());
                 f.channel().closeFuture().sync();
             } else {
-                log.warn("Mqtt Broker start error port：{}", 1883);
+                log.warn("Mqtt Broker start error port：{}", mqttConfigProperty.getBrokerPort());
             }
         }catch (Exception e) {
             log.error("Mqtt Broker 启动失败 ~~");

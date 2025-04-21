@@ -1,10 +1,13 @@
 package center.helloworld.transport.mqtt.server.session.entity;
 
+import cn.hutool.core.text.UnicodeUtil;
 import io.netty.channel.ChannelId;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.logging.log4j.message.Message;
+
+import java.util.UUID;
 
 /**
  * @author zhishun.cai
@@ -17,7 +20,7 @@ import org.apache.logging.log4j.message.Message;
 @NoArgsConstructor
 public class Session {
 
-    private String sessionId;
+    private String sessionId = UUID.randomUUID().toString();
 
     private String clientId;
 

@@ -68,6 +68,11 @@
             <artifactId>hutool-all</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>center.helloworld</groupId>
+            <artifactId>thingslink-starter-redis</artifactId>
+        </dependency>
+
     </dependencies>
 
     <profiles>
